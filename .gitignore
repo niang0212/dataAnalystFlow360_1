@@ -4,10 +4,14 @@ __pycache__/
 *.pyc
 
 # Environnements
-.env
+mon_env/
 .venv/
 venv/
-mon_env/
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+.env
+data/
 
 # Données brutes lourdes
 data/
