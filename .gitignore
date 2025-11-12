@@ -1,0 +1,22 @@
+# Python / DS
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+
+# Environnements
+.env
+.venv/
+venv/
+mon_env/
+
+# Données brutes lourdes
+data/
+*.csv
+*.parquet
+*.zip
+*.gz
+*.h5
+*.db
+
+# Autres
+.DS_Store
