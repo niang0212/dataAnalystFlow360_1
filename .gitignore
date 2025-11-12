@@ -24,3 +24,8 @@ data/
 
 # Autres
 .DS_Store
+
+# GCP service account keys
+*.key.json
+*credentials*.json
+fluted-elixir-477412-f7-720fa6fb47c0.json
