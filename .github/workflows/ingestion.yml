@@ -1,0 +1,59 @@
+name: Ingestion & QA
+
+on:
+  workflow_dispatch: {}   # tu pourras le lancer à la main depuis l'onglet Actions
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    # 1) Service PostgreSQL (Docker dans GitHub Actions)
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ${{ secrets.PG_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.PG_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ${{ secrets.PG_USER }}"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # On injecte les variables pour src/db/config.get_pg_url()
+      - name: Export PG env
+        run: |
+          echo "PG_HOST=${{ secrets.PG_HOST }}" >> $GITHUB_ENV
+          echo "PG_PORT=${{ secrets.PG_PORT }}" >> $GITHUB_ENV
+          echo "PG_USER=${{ secrets.PG_USER }}" >> $GITHUB_ENV
+          echo "PG_PASSWORD=${{ secrets.PG_PASSWORD }}" >> $GITHUB_ENV
+          echo "PG_DB=${{ secrets.PG_DB }}" >> $GITHUB_ENV
+
+      - name: Ingestion -> Data Lake (Parquet)
+        run: python -m src.ingestion.ingest_to_datalake
+
+      - name: Load RAW -> PostgreSQL
+        run: python -m src.ingestion.load_to_postgres
+
+      - name: Build CLEAN table
+        run: python -m src.transformation.clean_postgres_data
+
+      - name: Run Quality Checks
+        run: python -m src.qa.run_quality_checks
